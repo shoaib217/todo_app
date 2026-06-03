@@ -512,6 +512,9 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                           );
                         }
                       },
+                      onEdit: () {
+                        _showEditTitleDialog(context, controller, todo);
+                      },
                       onTap: () {},
                     );
                   }),

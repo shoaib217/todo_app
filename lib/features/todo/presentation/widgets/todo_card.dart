@@ -7,6 +7,7 @@ class TodoCard extends StatelessWidget {
   final ValueChanged<bool> onToggle;
   final VoidCallback onDelete;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
 
   // New optional callbacks for direct inline actions
   final ValueChanged<int>? onPriorityChanged;
@@ -20,6 +21,7 @@ class TodoCard extends StatelessWidget {
     this.onTap,
     this.onPriorityChanged,
     this.onDueDateChanged,
+    this.onEdit,
   });
 
   // --- UI Color & Text Helpers ---
@@ -381,7 +383,7 @@ class TodoCard extends StatelessWidget {
                     onSelected: (action) {
                       switch (action) {
                         case 'edit':
-                          if (onTap != null) onTap!();
+                          if (onEdit != null) onEdit!();
                           break;
                         case 'postpone':
                           if (onDueDateChanged != null) {
