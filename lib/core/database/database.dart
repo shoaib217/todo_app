@@ -12,7 +12,8 @@ class TodosTable extends Table {
   TextColumn get title => text()();
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
   DateTimeColumn get dueDate => dateTime().nullable()();
-  IntColumn get priority => integer().withDefault(const Constant(0))(); // 0: Low, 1: Medium, 2: High
+  IntColumn get priority =>
+      integer().withDefault(const Constant(0))(); // 0: Low, 1: Medium, 2: High
 
   @override
   Set<Column> get primaryKey => {id};
@@ -27,13 +28,13 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.addColumn(todosTable, todosTable.dueDate);
-            await m.addColumn(todosTable, todosTable.priority);
-          }
-        },
-      );
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(todosTable, todosTable.dueDate);
+        await m.addColumn(todosTable, todosTable.priority);
+      }
+    },
+  );
 
   // Streams real-time updates directly to Riverpod UI listeners
   Stream<List<TodosTableData>> watchTodos() => select(todosTable).watch();
@@ -50,12 +51,13 @@ class AppDatabase extends _$AppDatabase {
     DateTime? dueDate,
     int priority = 0,
   }) async {
-    final lastTodo = await (select(todosTable)
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ])
-          ..limit(1))
-        .getSingleOrNull();
+    final lastTodo =
+        await (select(todosTable)
+              ..orderBy([
+                (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
 
     final nextId = (lastTodo?.id ?? 0) + 1;
     await into(todosTable).insert(
@@ -101,6 +103,24 @@ class AppDatabase extends _$AppDatabase {
   Future<void> toggleTodoLocal(int id, bool completed) async {
     await (update(todosTable)..where((t) => t.id.equals(id))).write(
       TodosTableCompanion(completed: Value(completed)),
+    );
+  }
+
+  Future<void> updateTodoTitle(int id, String title) async {
+    await (update(todosTable)..where((t) => t.id.equals(id))).write(
+      TodosTableCompanion(title: Value(title)),
+    );
+  }
+
+  Future<void> updateTodoPriority(int id, int priority) async {
+    await (update(todosTable)..where((t) => t.id.equals(id))).write(
+      TodosTableCompanion(priority: Value(priority)),
+    );
+  }
+
+  Future<void> updateTodoDueDate(int id, DateTime? dueDate) async {
+    await (update(todosTable)..where((t) => t.id.equals(id))).write(
+      TodosTableCompanion(dueDate: Value(dueDate)),
     );
   }
 }

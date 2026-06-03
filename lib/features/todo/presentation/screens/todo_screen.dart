@@ -5,6 +5,7 @@ import 'package:todo_app/features/todo/presentation/controller/todo_controller.d
 import 'package:todo_app/core/database/database.dart';
 import 'package:todo_app/features/todo/presentation/widgets/add_todo_bottom_sheet.dart';
 import 'package:todo_app/features/todo/presentation/widgets/rating_dialog.dart';
+import 'package:todo_app/features/todo/presentation/widgets/todo_card.dart';
 
 class TodoScreen extends ConsumerStatefulWidget {
   const TodoScreen({super.key});
@@ -37,6 +38,42 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
       if (!mounted) return;
       await RatingDialog.show(context);
     });
+  }
+
+  Future<void> _showEditTitleDialog(
+    BuildContext context,
+    TodoController controller,
+    TodosTableData todo,
+  ) async {
+    final titleController = TextEditingController(text: todo.title);
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Task Title'),
+          content: TextField(
+            controller: titleController,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Task title'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final text = titleController.text.trim();
+                if (text.isEmpty) return;
+                await controller.updateTodoTitle(todo.id, text);
+                if (context.mounted) Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Color _getPriorityColor(int priority) {
@@ -94,6 +131,66 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     if (dateToCheck == tomorrow) return 'Tomorrow';
     if (dateToCheck == yesterday) return 'Yesterday';
     return DateFormat('EEEE, d MMM yyyy').format(date);
+  }
+
+  Widget _buildBadge(
+    IconData icon,
+    String label,
+    Color backgroundColor,
+    Color textColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: backgroundColor.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: textColor.withOpacity(0.95)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSwipeAction(
+    IconData icon,
+    String label,
+    Color backgroundColor,
+    Alignment alignment,
+  ) {
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -364,98 +461,58 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                             todo.priority,
                           ).withOpacity(0.85);
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Card(
-                        color: _getPriorityBackgroundColor(todo.priority),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: _getPriorityColor(todo.priority),
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(16),
-                                  topRight: Radius.circular(16),
-                                ),
-                              ),
+                    return TodoCard(
+                      todo: todo,
+                      onToggle: (checked) =>
+                          controller.toggleTodo(todo.id, checked),
+                      onDelete: () async {
+                        await controller.deleteTodo(todo.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Task deleted'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Colors.redAccent,
+                              duration: Duration(seconds: 1),
                             ),
-                            ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
+                          );
+                        }
+                      },
+                      onPriorityChanged: (priority) async {
+                        await controller.updateTodoPriority(todo.id, priority);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Priority set to ${_getPriorityLabel(priority)}',
                               ),
-                              leading: Transform.scale(
-                                scale: 1.2,
-                                child: Checkbox(
-                                  value: todo.completed,
-                                  activeColor: const Color(0xFF37474F),
-                                  checkColor: Colors.amber,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  onChanged: (bool? isChecked) {
-                                    if (isChecked != null) {
-                                      controller.toggleTodo(todo.id, isChecked);
-                                    }
-                                  },
-                                ),
-                              ),
-                              title: Text(
-                                todo.title,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  decoration: todo.completed
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  color: textColor,
-                                ),
-                              ),
-                              subtitle: todo.dueDate != null
-                                  ? Row(
-                                      children: [
-                                        Icon(
-                                          Icons.access_time,
-                                          size: 14,
-                                          color: subtitleColor,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          DateFormat.jm().format(todo.dueDate!),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: subtitleColor,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : null,
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_sweep_outlined),
-                                color: Colors.red[400],
-                                onPressed: () async {
-                                  await controller.deleteTodo(todo.id);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Task deleted'),
-                                        behavior: SnackBarBehavior.floating,
-                                        backgroundColor: Colors.red[400],
-                                        duration: const Duration(seconds: 1),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 1),
                             ),
-                          ],
-                        ),
-                      ),
+                          );
+                        }
+                      },
+                      onDueDateChanged: (date) async {
+                        await controller.updateTodoDueDate(
+                          todo.id,
+                          date,
+                          todo.title,
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                date == null
+                                    ? 'Reminder removed'
+                                    : 'Due date updated',
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
+                      onTap: () {},
                     );
                   }),
                 );
