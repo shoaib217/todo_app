@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app/features/todo/presentation/controller/todo_controller.dart';
 import 'package:todo_app/core/database/database.dart';
+import 'package:todo_app/features/todo/presentation/screens/settings_screen.dart';
 import 'package:todo_app/features/todo/presentation/widgets/add_todo_bottom_sheet.dart';
 import 'package:todo_app/features/todo/presentation/widgets/rating_dialog.dart';
 import 'package:todo_app/features/todo/presentation/widgets/todo_card.dart';
@@ -220,6 +221,17 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
             ),
             title: const Text('My Daily Tasks'),
             titleSpacing: 20,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'Settings',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.parallax,
               background: Container(
@@ -318,13 +330,6 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 ),
               ),
             ),
-            actions: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.calendar_today),
-              ),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.star_border)),
-            ],
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(84),
               child: Padding(

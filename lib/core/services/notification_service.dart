@@ -5,18 +5,17 @@ import 'dart:io';
 import 'package:todo_app/core/database/database.dart';
 
 @pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse notificationResponse) async {
+Future<void> _handleNotificationResponse(
+  NotificationResponse notificationResponse,
+) async {
   if (notificationResponse.actionId == 'complete_task') {
     final String? payload = notificationResponse.payload;
     if (payload != null) {
       final int? id = int.tryParse(payload);
       if (id != null) {
-        // 1. Update the database in the background
-        final db = AppDatabase();
+        final db = appDatabase;
         await db.toggleTodoLocal(id, true);
-        await db.close();
 
-        // 2. Dismiss the notification after action
         await NotificationService.cancelReminder(id);
       }
     }
@@ -31,37 +30,44 @@ class NotificationService {
     tz.initializeTimeZones();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsDarwin,
+        );
 
     await _notificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
+      onDidReceiveNotificationResponse: _handleNotificationResponse,
+      onDidReceiveBackgroundNotificationResponse: _handleNotificationResponse,
     );
   }
 
   static Future<void> requestPermissions() async {
     if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          _notificationsPlugin.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+          _notificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
       await androidImplementation?.requestNotificationsPermission();
     }
   }
 
   static Future<void> scheduleReminder(
-      int id, String title, DateTime scheduledDate) async {
+    int id,
+    String title,
+    DateTime scheduledDate,
+  ) async {
     // Only schedule if the date is in the future
     if (scheduledDate.isBefore(DateTime.now())) return;
 
@@ -74,6 +80,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'todo_reminders',
           'Todo Reminders',
+          icon: '@mipmap/launcher_icon',
           importance: Importance.max,
           priority: Priority.high,
           actions: <AndroidNotificationAction>[

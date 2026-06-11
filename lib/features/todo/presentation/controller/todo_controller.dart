@@ -4,9 +4,7 @@ import 'package:todo_app/core/services/notification_service.dart';
 
 // Singletons managed safely via Riverpod dependency graph
 final databaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
-  // AppDatabase does not expose a close() method, so skip explicit disposal here.
-  return db;
+  return appDatabase;
 });
 
 // Real-time stream bound directly to the UI layer
