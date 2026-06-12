@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app/core/database/database.dart';
+import 'package:todo_app/core/models/todo.dart';
 
 class TodoCard extends StatelessWidget {
   final TodosTableData todo;

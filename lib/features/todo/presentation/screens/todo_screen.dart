@@ -8,6 +8,8 @@ import 'package:todo_app/features/todo/presentation/widgets/add_todo_bottom_shee
 import 'package:todo_app/features/todo/presentation/widgets/rating_dialog.dart';
 import 'package:todo_app/features/todo/presentation/widgets/todo_card.dart';
 
+import '../../../../core/models/todo.dart';
+
 class TodoScreen extends ConsumerStatefulWidget {
   const TodoScreen({super.key});
 
@@ -18,6 +20,15 @@ class TodoScreen extends ConsumerStatefulWidget {
 class _TodoScreenState extends ConsumerState<TodoScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Initial sync with backend
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(todoControllerProvider).syncTodos();
+    });
+  }
 
   @override
   void dispose() {
@@ -378,7 +389,12 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
               hasScrollBody: false,
               child: Center(child: Text('Error: $error')),
             ),
-            data: (todoList) {
+            data: (todoListRaw) {
+              // Convert Todo objects to TodosTableData for UI compatibility
+              final todoList = todoListRaw is List<Todo>
+                  ? todoListRaw.map((e) => e.toDatabaseData()).toList()
+                  : todoListRaw as List<TodosTableData>;
+
               final filteredList = todoList
                   .where(
                     (t) => t.title.toLowerCase().contains(
