@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:todo_app/features/todo/presentation/controller/todo_controller.dart';
-import 'package:todo_app/core/database/database.dart';
+import 'package:todo_app/core/models/todo.dart';
 import 'package:todo_app/features/todo/presentation/screens/settings_screen.dart';
 import 'package:todo_app/features/todo/presentation/widgets/add_todo_bottom_sheet.dart';
 import 'package:todo_app/features/todo/presentation/widgets/rating_dialog.dart';
 import 'package:todo_app/features/todo/presentation/widgets/todo_card.dart';
-
-import '../../../../core/models/todo.dart';
 
 class TodoScreen extends ConsumerStatefulWidget {
   const TodoScreen({super.key});
@@ -19,12 +16,14 @@ class TodoScreen extends ConsumerStatefulWidget {
 
 class _TodoScreenState extends ConsumerState<TodoScreen> {
   final _searchController = TextEditingController();
-  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    // Initial sync with backend
+    _searchController.addListener(() {
+      ref.read(todoSearchQueryProvider.notifier).state = _searchController.text;
+    });
+    // Initial sync with backend in background
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(todoControllerProvider).syncTodos();
     });
@@ -48,14 +47,14 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     ).then((_) async {
       await Future.delayed(const Duration(seconds: 5));
       if (!mounted) return;
-      await RatingDialog.show(context);
+      if (context.mounted) await RatingDialog.show(context);
     });
   }
 
   Future<void> _showEditTitleDialog(
     BuildContext context,
     TodoController controller,
-    TodosTableData todo,
+    Todo todo,
   ) async {
     final titleController = TextEditingController(text: todo.title);
     await showDialog<void>(
@@ -88,39 +87,6 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     );
   }
 
-  Color _getPriorityColor(int priority) {
-    switch (priority) {
-      case 2:
-        return const Color(0xFFC62828);
-      case 1:
-        return const Color(0xFFF9A825);
-      default:
-        return const Color(0xFF1565C0);
-    }
-  }
-
-  Color _getPriorityBackgroundColor(int priority) {
-    switch (priority) {
-      case 2:
-        return const Color(0xFFFFEBEE);
-      case 1:
-        return const Color(0xFFFFFDE7);
-      default:
-        return const Color(0xFFE3F2FD);
-    }
-  }
-
-  Color _getPriorityTextColor(int priority) {
-    switch (priority) {
-      case 2:
-        return const Color(0xFFB71C1C);
-      case 1:
-        return const Color(0xFF827717);
-      default:
-        return const Color(0xFF0D47A1);
-    }
-  }
-
   String _getPriorityLabel(int priority) {
     switch (priority) {
       case 2:
@@ -132,83 +98,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     }
   }
 
-  String _getDateHeader(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    final yesterday = today.subtract(const Duration(days: 1));
-    final dateToCheck = DateTime(date.year, date.month, date.day);
-
-    if (dateToCheck == today) return 'Today';
-    if (dateToCheck == tomorrow) return 'Tomorrow';
-    if (dateToCheck == yesterday) return 'Yesterday';
-    return DateFormat('EEEE, d MMM yyyy').format(date);
-  }
-
-  Widget _buildBadge(
-    IconData icon,
-    String label,
-    Color backgroundColor,
-    Color textColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: backgroundColor.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: textColor.withOpacity(0.95)),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSwipeAction(
-    IconData icon,
-    String label,
-    Color backgroundColor,
-    Alignment alignment,
-  ) {
-    return Container(
-      alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final todosAsync = ref.watch(todoStreamProvider);
+    final groupedTodosAsync = ref.watch(groupedTodosProvider);
     final controller = ref.read(todoControllerProvider);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -305,7 +199,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: Colors.white24,
                                 shape: BoxShape.circle,
                               ),
@@ -326,7 +220,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Text(
+                            const Text(
                               'Stay focused and finish your best work',
                               style: TextStyle(
                                 fontSize: 13,
@@ -349,14 +243,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   elevation: 4,
                   shadowColor: Colors.black26,
                   borderRadius: BorderRadius.circular(30),
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[900]
-                      : Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   child: SizedBox(
                     height: 60,
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 16,
@@ -369,10 +260,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor:
-                            Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[900]
-                            : Colors.white,
+                        fillColor: isDarkMode ? Colors.grey[900] : Colors.white,
                       ),
                     ),
                   ),
@@ -380,7 +268,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
               ),
             ),
           ),
-          todosAsync.when(
+          groupedTodosAsync.when(
             loading: () => const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(child: CircularProgressIndicator()),
@@ -389,21 +277,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
               hasScrollBody: false,
               child: Center(child: Text('Error: $error')),
             ),
-            data: (todoListRaw) {
-              // Convert Todo objects to TodosTableData for UI compatibility
-              final todoList = todoListRaw is List<Todo>
-                  ? todoListRaw.map((e) => e.toDatabaseData()).toList()
-                  : todoListRaw as List<TodosTableData>;
-
-              final filteredList = todoList
-                  .where(
-                    (t) => t.title.toLowerCase().contains(
-                      _searchQuery.toLowerCase(),
-                    ),
-                  )
-                  .toList();
-
-              if (filteredList.isEmpty) {
+            data: (groupedTasks) {
+              if (groupedTasks.isEmpty) {
                 return SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
@@ -413,7 +288,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                         Icon(Icons.task_alt, size: 80, color: Colors.grey[300]),
                         const SizedBox(height: 16),
                         Text(
-                          _searchQuery.isEmpty
+                          _searchController.text.isEmpty
                               ? 'No tasks yet!'
                               : 'No matching tasks!',
                           style: TextStyle(
@@ -428,128 +303,90 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 );
               }
 
-              filteredList.sort((a, b) {
-                if (a.priority != b.priority) {
-                  return b.priority.compareTo(a.priority);
-                }
-                if (a.dueDate == null && b.dueDate == null) return 0;
-                if (a.dueDate == null) return 1;
-                if (b.dueDate == null) return -1;
-                return a.dueDate!.compareTo(b.dueDate!);
-              });
-
-              final Map<String, List<TodosTableData>> groupedTasks = {};
-              for (var todo in filteredList) {
-                final dateKey = todo.dueDate != null
-                    ? _getDateHeader(todo.dueDate!)
-                    : 'No Date';
-                groupedTasks.putIfAbsent(dateKey, () => []).add(todo);
-              }
-
               final sortedKeys = groupedTasks.keys.toList();
-              final children = <Widget>[];
-
-              for (var dateLabel in sortedKeys) {
-                final tasks = groupedTasks[dateLabel]!;
-
-                children.add(
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16, bottom: 8, left: 4),
-                    child: Text(
-                      dateLabel,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                  ),
-                );
-
-                children.addAll(
-                  tasks.map((todo) {
-                    final textColor = todo.completed
-                        ? Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white70
-                              : Colors.grey[700]
-                        : _getPriorityTextColor(todo.priority);
-                    final subtitleColor = todo.completed
-                        ? Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white54
-                              : Colors.grey[600]
-                        : _getPriorityTextColor(
-                            todo.priority,
-                          ).withOpacity(0.85);
-
-                    return TodoCard(
-                      todo: todo,
-                      onToggle: (checked) =>
-                          controller.toggleTodo(todo.id, checked),
-                      onDelete: () async {
-                        await controller.deleteTodo(todo.id);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Task deleted'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.redAccent,
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        }
-                      },
-                      onPriorityChanged: (priority) async {
-                        await controller.updateTodoPriority(todo.id, priority);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Priority set to ${_getPriorityLabel(priority)}',
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        }
-                      },
-                      onDueDateChanged: (date) async {
-                        await controller.updateTodoDueDate(
-                          todo.id,
-                          date,
-                          todo.title,
-                        );
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                date == null
-                                    ? 'Reminder removed'
-                                    : 'Due date updated',
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        }
-                      },
-                      onEdit: () {
-                        _showEditTitleDialog(context, controller, todo);
-                      },
-                      onTap: () {},
-                    );
-                  }),
-                );
+              final flattenedItems = <dynamic>[];
+              for (final key in sortedKeys) {
+                flattenedItems.add(key);
+                flattenedItems.addAll(groupedTasks[key]!);
               }
-
-              children.add(const SizedBox(height: 24));
 
               return SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList(delegate: SliverChildListDelegate(children)),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = flattenedItems[index];
+                      if (item is String) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16, bottom: 8, left: 4),
+                          child: Text(
+                            item,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      final todo = item as Todo;
+                      return TodoCard(
+                        todo: todo.toDatabaseData(),
+                        onToggle: (checked) => controller.toggleTodo(todo.id, checked),
+                        onDelete: () async {
+                          await controller.deleteTodo(todo.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Task deleted'),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: Colors.redAccent,
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                        },
+                        onPriorityChanged: (priority) async {
+                          await controller.updateTodoPriority(todo.id, priority);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Priority set to ${_getPriorityLabel(priority)}',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                        },
+                        onDueDateChanged: (date) async {
+                          await controller.updateTodoDueDate(todo.id, date, todo.title);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  date == null ? 'Reminder removed' : 'Due date updated',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                        },
+                        onEdit: () => _showEditTitleDialog(context, controller, todo),
+                        onTap: () {},
+                      );
+                    },
+                    childCount: flattenedItems.length,
+                  ),
+                ),
               );
             },
           ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
     );
