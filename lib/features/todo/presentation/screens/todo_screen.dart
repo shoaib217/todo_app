@@ -110,215 +110,230 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
         label: const Text('Add Task'),
         icon: const Icon(Icons.add),
       ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            expandedHeight: 280,
-            toolbarHeight: 72,
-            floating: true,
-            snap: true,
-            stretch: true,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(todoControllerProvider).syncTodos();
+        },
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              expandedHeight: 280,
+              toolbarHeight: 72,
+              floating: true,
+              snap: true,
+              stretch: true,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(30),
+                ),
+              ),
+              title: const Text('My Daily Tasks'),
+              titleSpacing: 20,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: 'Settings',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                ),
+              ],
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.parallax,
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF5B86E5), Color(0xFF36D1DC)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Positioned(
+                        top: 40,
+                        right: -40,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 120,
+                        left: -30,
+                        child: Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 30,
+                        right: 30,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 2,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white24,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.checklist_rtl,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              const Text(
+                                'My Daily Tasks',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Stay focused and finish your best work',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(84),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Material(
+                    elevation: 4,
+                    shadowColor: Colors.black26,
+                    borderRadius: BorderRadius.circular(30),
+                    color: isDarkMode ? Colors.grey[900] : Colors.white,
+                    child: SizedBox(
+                      height: 60,
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                          hintText: 'Search tasks...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: isDarkMode
+                              ? Colors.grey[900]
+                              : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            title: const Text('My Daily Tasks'),
-            titleSpacing: 20,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.settings),
-                tooltip: 'Settings',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            groupedTodosAsync.when(
+              loading: () => const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, _) => SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: Text('Error: $error')),
+              ),
+              data: (groupedTasks) {
+                if (groupedTasks.isEmpty) {
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.task_alt,
+                            size: 80,
+                            color: Colors.grey[300],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchController.text.isEmpty
+                                ? 'No tasks yet!'
+                                : 'No matching tasks!',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
-                },
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.parallax,
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF5B86E5), Color(0xFF36D1DC)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Positioned(
-                      top: 40,
-                      right: -40,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 120,
-                      left: -30,
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 30,
-                      right: 30,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 2,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: const BoxDecoration(
-                                color: Colors.white24,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.checklist_rtl,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                              'My Daily Tasks',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Stay focused and finish your best work',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(84),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Material(
-                  elevation: 4,
-                  shadowColor: Colors.black26,
-                  borderRadius: BorderRadius.circular(30),
-                  color: isDarkMode ? Colors.grey[900] : Colors.white,
-                  child: SizedBox(
-                    height: 60,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 16,
-                        ),
-                        hintText: 'Search tasks...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: isDarkMode ? Colors.grey[900] : Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          groupedTodosAsync.when(
-            loading: () => const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (error, _) => SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: Text('Error: $error')),
-            ),
-            data: (groupedTasks) {
-              if (groupedTasks.isEmpty) {
-                return SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.task_alt, size: 80, color: Colors.grey[300]),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchController.text.isEmpty
-                              ? 'No tasks yet!'
-                              : 'No matching tasks!',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.grey[500],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
+                }
 
-              final sortedKeys = groupedTasks.keys.toList();
-              final flattenedItems = <dynamic>[];
-              for (final key in sortedKeys) {
-                flattenedItems.add(key);
-                flattenedItems.addAll(groupedTasks[key]!);
-              }
+                final sortedKeys = groupedTasks.keys.toList();
+                final flattenedItems = <dynamic>[];
+                for (final key in sortedKeys) {
+                  flattenedItems.add(key);
+                  flattenedItems.addAll(groupedTasks[key]!);
+                }
 
-              return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
                       final item = flattenedItems[index];
                       if (item is String) {
                         return Padding(
-                          padding: const EdgeInsets.only(top: 16, bottom: 8, left: 4),
+                          padding: const EdgeInsets.only(
+                            top: 16,
+                            bottom: 8,
+                            left: 4,
+                          ),
                           child: Text(
                             item,
                             style: TextStyle(
@@ -330,11 +345,12 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                           ),
                         );
                       }
-                      
+
                       final todo = item as Todo;
                       return TodoCard(
                         todo: todo.toDatabaseData(),
-                        onToggle: (checked) => controller.toggleTodo(todo.id, checked),
+                        onToggle: (checked) =>
+                            controller.toggleTodo(todo.id, checked),
                         onDelete: () async {
                           await controller.deleteTodo(todo.id);
                           if (context.mounted) {
@@ -349,7 +365,10 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                           }
                         },
                         onPriorityChanged: (priority) async {
-                          await controller.updateTodoPriority(todo.id, priority);
+                          await controller.updateTodoPriority(
+                            todo.id,
+                            priority,
+                          );
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -363,12 +382,18 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                           }
                         },
                         onDueDateChanged: (date) async {
-                          await controller.updateTodoDueDate(todo.id, date, todo.title);
+                          await controller.updateTodoDueDate(
+                            todo.id,
+                            date,
+                            todo.title,
+                          );
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  date == null ? 'Reminder removed' : 'Due date updated',
+                                  date == null
+                                      ? 'Reminder removed'
+                                      : 'Due date updated',
                                 ),
                                 behavior: SnackBarBehavior.floating,
                                 duration: const Duration(seconds: 1),
@@ -376,18 +401,18 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                             );
                           }
                         },
-                        onEdit: () => _showEditTitleDialog(context, controller, todo),
+                        onEdit: () =>
+                            _showEditTitleDialog(context, controller, todo),
                         onTap: () {},
                       );
-                    },
-                    childCount: flattenedItems.length,
+                    }, childCount: flattenedItems.length),
                   ),
-                ),
-              );
-            },
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+                );
+              },
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }
