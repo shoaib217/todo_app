@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app/core/database/database.dart';
 import 'package:todo_app/core/models/todo.dart';
+import 'package:todo_app/core/services/auth_service.dart';
 import 'package:todo_app/core/services/notification_service.dart';
 import 'package:todo_app/core/services/todo_api_service.dart';
 
@@ -13,8 +14,11 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 
 // Real-time stream from the LOCAL database
 final todoListProvider = StreamProvider<List<Todo>>((ref) {
+  final user = ref.watch(authProvider);
+  if (user == null) return Stream.value([]);
+  
   final db = ref.watch(databaseProvider);
-  return db.watchTodos().map((list) => list.map((e) => Todo.fromDatabaseData(e)).toList());
+  return db.watchTodos(user.id).map((list) => list.map((e) => Todo.fromDatabaseData(e)).toList());
 });
 
 // Alias for UI compatibility
@@ -69,11 +73,15 @@ class TodoController {
 
   TodoApiService get _api => _ref.read(todoApiServiceProvider);
   AppDatabase get _db => _ref.read(databaseProvider);
+  int? get _userId => _ref.read(authProvider)?.id;
 
   /// Background sync: Fetch from API and update local database
   Future<void> syncTodos() async {
+    final userId = _userId;
+    if (userId == null) return;
+
     try {
-      final remoteTodos = await _api.fetchTodos();
+      final remoteTodos = await _api.fetchTodos(userId);
       final localDataList = remoteTodos.map((t) => t.toDatabaseData()).toList();
       await _db.cacheTodos(localDataList);
     } catch (e) {
@@ -96,15 +104,19 @@ class TodoController {
   }
 
   Future<void> addTodo(String title, {DateTime? dueDate, int priority = 0}) async {
+    final userId = _userId;
+    if (userId == null) return;
+
     try {
       // 1. Add to backend to get real ID
       final newTodo = await _api.createTodo(
-        Todo(id: 0, title: title, dueDate: dueDate, priority: priority),
+        Todo(id: 0, userId: userId, title: title, dueDate: dueDate, priority: priority),
       );
       
       // 2. Save locally
       await _db.insertTodoLocalWithId(
         newTodo.id,
+        newTodo.userId,
         newTodo.title,
         newTodo.completed,
         dueDate: newTodo.dueDate,
@@ -115,8 +127,9 @@ class TodoController {
         await NotificationService.scheduleReminder(newTodo.id, title, dueDate);
       }
     } catch (e) {
+      debugPrint('Add todo sync failed: $e');
       // Fallback: Add locally if offline
-      final id = await _db.insertTodoLocal(title, dueDate: dueDate, priority: priority);
+      final id = await _db.insertTodoLocal(userId, title, dueDate: dueDate, priority: priority);
       if (dueDate != null) {
         await NotificationService.scheduleReminder(id, title, dueDate);
       }

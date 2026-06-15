@@ -9,6 +9,7 @@ part 'database.g.dart';
 // Relational DB schema Definition
 class TodosTable extends Table {
   IntColumn get id => integer()();
+  IntColumn get userId => integer().withDefault(const Constant(0))();
   TextColumn get title => text()();
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
   DateTimeColumn get dueDate => dateTime().nullable()();
@@ -24,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2; // Incremented schema version
+  int get schemaVersion => 3; // Incremented schema version
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -33,11 +34,15 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(todosTable, todosTable.dueDate);
         await m.addColumn(todosTable, todosTable.priority);
       }
+      if (from < 3) {
+        await m.addColumn(todosTable, todosTable.userId);
+      }
     },
   );
 
   // Streams real-time updates directly to Riverpod UI listeners
-  Stream<List<TodosTableData>> watchTodos() => select(todosTable).watch();
+  Stream<List<TodosTableData>> watchTodos(int userId) => 
+      (select(todosTable)..where((t) => t.userId.equals(userId))).watch();
 
   // Cache or update server items locally using stable upsert logic
   Future<void> cacheTodos(List<TodosTableData> todos) async {
@@ -47,6 +52,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> insertTodoLocal(
+    int userId,
     String title, {
     DateTime? dueDate,
     int priority = 0,
@@ -63,6 +69,7 @@ class AppDatabase extends _$AppDatabase {
     await into(todosTable).insert(
       TodosTableCompanion.insert(
         id: Value(nextId),
+        userId: Value(userId),
         title: title,
         completed: Value(false),
         dueDate: Value(dueDate),
@@ -74,6 +81,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> insertTodoLocalWithId(
     int id,
+    int userId,
     String title,
     bool completed, {
     DateTime? dueDate,
@@ -82,6 +90,7 @@ class AppDatabase extends _$AppDatabase {
     await into(todosTable).insert(
       TodosTableCompanion.insert(
         id: Value(id),
+        userId: Value(userId),
         title: title,
         completed: Value(completed),
         dueDate: Value(dueDate),

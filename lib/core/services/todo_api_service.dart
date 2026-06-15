@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:todo_app/core/exceptions/api_exception.dart';
 import 'package:todo_app/core/models/todo.dart';
 
 final dioProvider = Provider<Dio>((ref) {
@@ -24,13 +25,18 @@ class TodoApiService {
 
   final Dio _dio;
 
-  Future<List<Todo>> fetchTodos() async {
+  Future<List<Todo>> fetchTodos(int userId) async {
     try {
-      final response = await _dio.get('/todos');
+      final response = await _dio.get(
+        '/todos',
+        queryParameters: {'userId': userId},
+      );
       final list = response.data as List;
       return list.map((json) => Todo.fromJson(json as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw ApiUtils.handleDioError(e);
     } catch (e) {
-      rethrow;
+      throw ApiException('An unexpected error occurred while fetching todos');
     }
   }
 
@@ -41,8 +47,10 @@ class TodoApiService {
         data: todo.toJson(),
       );
       return Todo.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiUtils.handleDioError(e);
     } catch (e) {
-      rethrow;
+      throw ApiException('An unexpected error occurred while creating todo');
     }
   }
 
@@ -53,16 +61,20 @@ class TodoApiService {
         data: todo.toJson(),
       );
       return Todo.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiUtils.handleDioError(e);
     } catch (e) {
-      rethrow;
+      throw ApiException('An unexpected error occurred while updating todo');
     }
   }
 
   Future<void> deleteTodo(int id) async {
     try {
       await _dio.delete('/todos/$id');
+    } on DioException catch (e) {
+      throw ApiUtils.handleDioError(e);
     } catch (e) {
-      rethrow;
+      throw ApiException('An unexpected error occurred while deleting todo');
     }
   }
 }

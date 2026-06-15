@@ -7,6 +7,7 @@ part 'todo.g.dart';
 class Todo {
   const Todo({
     required this.id,
+    required this.userId,
     required this.title,
     this.completed = false,
     this.dueDate,
@@ -16,6 +17,7 @@ class Todo {
   factory Todo.fromJson(Map<String, dynamic> json) => _$TodoFromJson(json);
 
   final int id;
+  final int userId;
   final String title;
   final bool completed;
   final DateTime? dueDate;
@@ -27,6 +29,7 @@ class Todo {
   TodosTableData toDatabaseData() {
     return TodosTableData(
       id: id,
+      userId: userId,
       title: title,
       completed: completed,
       dueDate: dueDate,
@@ -38,6 +41,7 @@ class Todo {
   factory Todo.fromDatabaseData(TodosTableData data) {
     return Todo(
       id: data.id,
+      userId: data.userId,
       title: data.title,
       completed: data.completed,
       dueDate: data.dueDate,

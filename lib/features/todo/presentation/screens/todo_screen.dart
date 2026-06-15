@@ -7,6 +7,8 @@ import 'package:todo_app/features/todo/presentation/widgets/add_todo_bottom_shee
 import 'package:todo_app/features/todo/presentation/widgets/rating_dialog.dart';
 import 'package:todo_app/features/todo/presentation/widgets/todo_card.dart';
 
+import '../../../../core/services/auth_service.dart';
+
 class TodoScreen extends ConsumerStatefulWidget {
   const TodoScreen({super.key});
 
@@ -103,6 +105,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     final groupedTodosAsync = ref.watch(groupedTodosProvider);
     final controller = ref.read(todoControllerProvider);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final user = ref.watch(authProvider);
+    final firstName = user?.firstName ?? 'Guest';
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -115,7 +119,9 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
           await ref.read(todoControllerProvider).syncTodos();
         },
         child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           slivers: [
             SliverAppBar(
               backgroundColor: Colors.transparent,
@@ -130,7 +136,13 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   bottom: Radius.circular(30),
                 ),
               ),
-              title: const Text('My Daily Tasks'),
+              title: const Text(
+                'TaskSphere',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
               titleSpacing: 20,
               actions: [
                 IconButton(
@@ -216,23 +228,24 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              const Text(
-                                'My Daily Tasks',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.3,
-                                ),
+                            Text(
+                              'Hello, $firstName 👋',
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
                               ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Stay focused and finish your best work',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white70,
-                                ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Ready to conquer your day?',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
                               ),
+                            ),
                             ],
                           ),
                         ),
