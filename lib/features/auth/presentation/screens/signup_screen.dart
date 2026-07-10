@@ -76,6 +76,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   InputDecoration _getInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
+      labelStyle: const TextStyle(color: Colors.grey),
       prefixIcon: Icon(icon),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -135,124 +136,138 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         ),
                       ],
                     ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextFormField(
-                            controller: _firstNameController,
-                            decoration: _getInputDecoration('First Name', Icons.person_outline),
-                            validator: (value) => value == null || value.isEmpty ? 'Please enter first name' : null,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: _lastNameController,
-                            decoration: _getInputDecoration('Last Name', Icons.person_outline),
-                            validator: (value) => value == null || value.isEmpty ? 'Please enter last name' : null,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: _getInputDecoration('Email', Icons.email_outlined),
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) return 'Please enter email';
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                                return 'Enter a valid email address';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: _mobileController,
-                            decoration: _getInputDecoration('Mobile Number', Icons.phone_android),
-                            keyboardType: TextInputType.phone,
-                            textInputAction: TextInputAction.next,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) return 'Please enter mobile number';
-                              if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-                                return 'Enter a valid 10-digit mobile number';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: _loginIdController,
-                            decoration: _getInputDecoration('LoginID (Username)', Icons.badge_outlined),
-                            textInputAction: TextInputAction.next,
-                            validator: (value) => value == null || value.isEmpty ? 'Please enter LoginID' : null,
-                          ),
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
-                                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                              ),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        brightness: Brightness.light,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextFormField(
+                              controller: _firstNameController,
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: _getInputDecoration('First Name', Icons.person_outline),
+                              validator: (value) => value == null || value.isEmpty ? 'Please enter first name' : null,
+                              textInputAction: TextInputAction.next,
                             ),
-                            obscureText: _obscurePassword,
-                            textInputAction: TextInputAction.next,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) return 'Please enter password';
-                              if (value.length < 8) return 'Min 8 characters required';
-                              if (!RegExp(r'[A-Z]').hasMatch(value)) return 'One uppercase required';
-                              if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) return 'One special char required';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: _confirmPasswordController,
-                            decoration: InputDecoration(
-                              labelText: 'Confirm Password',
-                              prefixIcon: const Icon(Icons.lock_reset),
-                              suffixIcon: IconButton(
-                                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                              ),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            const SizedBox(height: 15),
+                            TextFormField(
+                              controller: _lastNameController,
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: _getInputDecoration('Last Name', Icons.person_outline),
+                              validator: (value) => value == null || value.isEmpty ? 'Please enter last name' : null,
+                              textInputAction: TextInputAction.next,
                             ),
-                            obscureText: _obscureConfirmPassword,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _signup(),
-                            validator: (value) => value == null || value.isEmpty ? 'Please confirm password' : null,
-                          ),
-                          const SizedBox(height: 25),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _signup,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF5B86E5),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                            const SizedBox(height: 15),
+                            TextFormField(
+                              controller: _emailController,
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: _getInputDecoration('Email', Icons.email_outlined),
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Please enter email';
+                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                  return 'Enter a valid email address';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 15),
+                            TextFormField(
+                              controller: _mobileController,
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: _getInputDecoration('Mobile Number', Icons.phone_android),
+                              keyboardType: TextInputType.phone,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Please enter mobile number';
+                                if (!RegExp(r'^\d{10}$').hasMatch(value)) {
+                                  return 'Enter a valid 10-digit mobile number';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 15),
+                            TextFormField(
+                              controller: _loginIdController,
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: _getInputDecoration('LoginID (Username)', Icons.badge_outlined),
+                              textInputAction: TextInputAction.next,
+                              validator: (value) => value == null || value.isEmpty ? 'Please enter LoginID' : null,
+                            ),
+                            const SizedBox(height: 15),
+                            TextFormField(
+                              controller: _passwordController,
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                suffixIcon: IconButton(
+                                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
-                                elevation: 2,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: _isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text(
-                                      'CREATE ACCOUNT',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                              obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Please enter password';
+                                if (value.length < 8) return 'Min 8 characters required';
+                                if (!RegExp(r'[A-Z]').hasMatch(value)) return 'One uppercase required';
+                                if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) return 'One special char required';
+                                return null;
+                              },
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 15),
+                            TextFormField(
+                              controller: _confirmPasswordController,
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: InputDecoration(
+                                labelText: 'Confirm Password',
+                                labelStyle: const TextStyle(color: Colors.grey),
+                                prefixIcon: const Icon(Icons.lock_reset),
+                                suffixIcon: IconButton(
+                                  icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              obscureText: _obscureConfirmPassword,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _signup(),
+                              validator: (value) => value == null || value.isEmpty ? 'Please confirm password' : null,
+                            ),
+                            const SizedBox(height: 25),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _signup,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF5B86E5),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
+                                ),
+                                child: _isLoading
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : const Text(
+                                        'CREATE ACCOUNT',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

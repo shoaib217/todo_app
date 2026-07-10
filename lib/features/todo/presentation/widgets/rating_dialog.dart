@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
 
 class RatingDialog extends StatefulWidget {
   final VoidCallback onSubmit;
@@ -228,6 +227,9 @@ class _RatingDialogState extends State<RatingDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Platform.isIOS ? _buildCupertinoDialog() : _buildMaterialDialog();
+    final platform = Theme.of(context).platform;
+    return platform == TargetPlatform.iOS
+        ? _buildCupertinoDialog()
+        : _buildMaterialDialog();
   }
 }

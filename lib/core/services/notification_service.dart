@@ -1,7 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'dart:io';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:todo_app/core/database/database.dart';
 
 @pragma('vm:entry-point')
@@ -53,6 +54,8 @@ class NotificationService {
   }
 
   static Future<void> requestPermissions() async {
+    if (kIsWeb) return;
+
     if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
           _notificationsPlugin
@@ -68,6 +71,7 @@ class NotificationService {
     String title,
     DateTime scheduledDate,
   ) async {
+    if (kIsWeb) return;
     // Only schedule if the date is in the future
     if (scheduledDate.isBefore(DateTime.now())) return;
 
@@ -101,6 +105,7 @@ class NotificationService {
   }
 
   static Future<void> cancelReminder(int id) async {
+    if (kIsWeb) return;
     await _notificationsPlugin.cancel(id);
   }
 }

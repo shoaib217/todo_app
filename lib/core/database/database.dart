@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
+import 'connection.dart' as impl;
 
 part 'database.g.dart';
 
@@ -22,7 +19,7 @@ class TodosTable extends Table {
 
 @DriftDatabase(tables: [TodosTable])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(impl.connect());
 
   @override
   int get schemaVersion => 3; // Incremented schema version
@@ -135,11 +132,3 @@ class AppDatabase extends _$AppDatabase {
 }
 
 final appDatabase = AppDatabase();
-
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'db.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
-}

@@ -125,61 +125,76 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ],
                   ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: _userIdController,
-                          decoration: InputDecoration(
-                            labelText: 'UserID',
-                            prefixIcon: const Icon(Icons.person_outline),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          validator: (value) => value == null || value.isEmpty
-                              ? 'Please enter UserID'
-                              : null,
-                        ),
-                        const SizedBox(height: 20),
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      brightness: Brightness.light,
+                      textTheme: const TextTheme(
+                        bodyMedium: TextStyle(color: Colors.black87),
+                      ),
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextFormField(
+                            controller: _userIdController,
+                            style: const TextStyle(color: Colors.black87),
+                            decoration: InputDecoration(
+                              labelText: 'UserID',
+                              labelStyle: const TextStyle(color: Colors.grey),
+                              prefixIcon: const Icon(Icons.person_outline),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            validator: (value) => value == null || value.isEmpty
+                                ? 'Please enter UserID'
+                                : null,
                           ),
-                          obscureText: _obscurePassword,
-                          validator: _validatePassword,
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _rememberMe,
-                              onChanged: (val) {
-                                setState(() => _rememberMe = val ?? false);
-                              },
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: _passwordController,
+                            style: const TextStyle(color: Colors.black87),
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              labelStyle: const TextStyle(color: Colors.grey),
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                            const Text('Remember Me'),
-                          ],
-                        ),
+                            obscureText: _obscurePassword,
+                            validator: _validatePassword,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _rememberMe,
+                                activeColor: const Color(0xFF5B86E5),
+                                onChanged: (val) {
+                                  setState(() => _rememberMe = val ?? false);
+                                },
+                              ),
+                              const Text(
+                                'Remember Me',
+                                style: TextStyle(color: Colors.black87),
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
@@ -208,6 +223,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
+              ),
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {

@@ -1,15 +1,19 @@
-import 'dart:io';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_app/core/exceptions/api_exception.dart';
 import 'package:todo_app/core/models/todo.dart';
 
 final dioProvider = Provider<Dio>((ref) {
+  String baseUrl = 'http://localhost:8080';
+  if (!kIsWeb && Platform.isAndroid) {
+    baseUrl = 'http://192.168.1.183:8080';
+  }
+
   return Dio(
     BaseOptions(
-      // 10.0.2.2 is the special alias for your host machine's localhost in Android Emulator
-      // Use 'localhost' for iOS or Web.
-      baseUrl: Platform.isAndroid ? 'http://192.168.1.183:8080' : 'http://localhost:8080',
+      baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 3),
     ),
