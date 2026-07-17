@@ -4,16 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_app/core/models/user.dart';
 import 'package:todo_app/core/services/auth_api_service.dart';
 
-final authProvider = StateNotifierProvider<AuthService, User?>((ref) {
-  return AuthService(ref.read(authApiServiceProvider));
-});
+final authProvider = NotifierProvider<AuthService, User?>(AuthService.new);
 
-class AuthService extends StateNotifier<User?> {
-  AuthService(this._apiService) : super(null) {
+class AuthService extends Notifier<User?> {
+  @override
+  User? build() {
     _loadUser();
+    return null;
   }
 
-  final AuthApiService _apiService;
+  AuthApiService get _apiService => ref.read(authApiServiceProvider);
   static const _userKey = 'logged_in_user';
 
   Future<void> _loadUser() async {

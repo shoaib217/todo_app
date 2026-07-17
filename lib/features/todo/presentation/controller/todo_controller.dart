@@ -27,7 +27,17 @@ final todoStreamProvider = Provider<AsyncValue<List<Todo>>>((ref) {
 });
 
 // Search query provider
-final todoSearchQueryProvider = StateProvider<String>((ref) => '');
+class TodoSearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void update(String query) => state = query;
+}
+
+final todoSearchQueryProvider =
+    NotifierProvider<TodoSearchQueryNotifier, String>(
+      TodoSearchQueryNotifier.new,
+    );
 
 // Grouping logic remains optimized but now watches the local stream
 final groupedTodosProvider = Provider<AsyncValue<Map<String, List<Todo>>>>((ref) {

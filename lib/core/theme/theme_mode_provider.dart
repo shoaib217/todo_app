@@ -4,13 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _themeModeKey = 'theme_mode';
 
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
-  (ref) => ThemeModeNotifier(),
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
 );
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
+class ThemeModeNotifier extends Notifier<ThemeMode> {
+  @override
+  ThemeMode build() {
     _loadThemeMode();
+    return ThemeMode.system;
   }
 
   Future<void> _loadThemeMode() async {

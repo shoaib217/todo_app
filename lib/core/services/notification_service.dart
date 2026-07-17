@@ -47,7 +47,7 @@ class NotificationService {
         );
 
     await _notificationsPlugin.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: _handleNotificationResponse,
       onDidReceiveBackgroundNotificationResponse: _handleNotificationResponse,
     );
@@ -76,11 +76,11 @@ class NotificationService {
     if (scheduledDate.isBefore(DateTime.now())) return;
 
     await _notificationsPlugin.zonedSchedule(
-      id,
-      'Task Reminder',
-      title,
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      NotificationDetails(
+      id: id,
+      title: 'Task Reminder',
+      body: title,
+      scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'todo_reminders',
           'Todo Reminders',
@@ -98,14 +98,12 @@ class NotificationService {
         iOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
       payload: id.toString(),
     );
   }
 
   static Future<void> cancelReminder(int id) async {
     if (kIsWeb) return;
-    await _notificationsPlugin.cancel(id);
+    await _notificationsPlugin.cancel(id: id);
   }
 }

@@ -23,7 +23,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(() {
-      ref.read(todoSearchQueryProvider.notifier).state = _searchController.text;
+      ref.read(todoSearchQueryProvider.notifier).update(_searchController.text);
     });
     // Initial sync with backend in background
     WidgetsBinding.instance.addPostFrameCallback((_) {
