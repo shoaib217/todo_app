@@ -3,11 +3,21 @@ workflows:
     name: iOS Build for BrowserStack
     max_build_duration: 60
     environment:
+      groups:
+        - app_store_credentials # Name of the group you will create in Codemagic
       flutter: stable
       xcode: latest
     scripts:
-      - name: Build Flutter iOS IPA for Cloud Testing
+      - name: Set up code signing
         script: |
-          flutter build ipa --no-codesign
+          keychain initialize
+          # Fetches signing files from Apple for the specific Bundle ID
+          app-store-connect fetch-signing-files "com.shoaib.todoapp" --type IOS_APP_DEVELOPMENT --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Build Flutter iOS IPA
+        script: |
+          # The signed IPA will be generated here
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
